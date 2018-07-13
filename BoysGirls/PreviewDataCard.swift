@@ -7,6 +7,9 @@
 //
 
 import UIKit
+import Firebase
+import FirebaseDatabase
+import FirebaseStorage
 
 class PreviewDataCard: UIViewController {
 
@@ -68,6 +71,7 @@ class PreviewDataCard: UIViewController {
     @IBAction func Submit(_ sender: UIButton) {
         let AlertController = UIAlertController(title: "確認資料無誤", message: "送出後就不能再修改囉", preferredStyle: .alert)
         let action = UIAlertAction(title: "送出", style: .default) { (Void) in
+            self.uploadImageToFirebaseStorage(data: self.photo)
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
             let nextView = storyboard.instantiateViewController(withIdentifier: "tabbar")
             self.present(nextView,animated:true,completion:nil)
@@ -94,4 +98,23 @@ class PreviewDataCard: UIViewController {
     }
     */
 
+}
+
+extension UIViewController{
+    func uploadImageToFirebaseStorage(data: [Data]) -> [String]{
+        var photourl = [String]()
+        for uploadData in data{
+            let uniqueString = NSUUID().uuidString
+            let storageRef = Storage.storage().reference().child("\(uniqueString).jpg")
+            storageRef.putData(uploadData, metadata: nil, completion: { (data, error) in
+                if error != nil {
+                    return
+                }
+                storageRef.downloadURL(completion: { (url, error) in
+                    photourl.append((url?.absoluteString)!)
+                })
+            })
+        }
+        return photourl
+    }
 }

@@ -157,7 +157,7 @@ class DataCardPart2: UIViewController {
 
 }
 
-//添加照片的Extention，要壓縮個不然圖片很大
+
 extension SignUpView: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {

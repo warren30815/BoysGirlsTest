@@ -11,7 +11,9 @@ import UIKit
 class TimetableCell: UITableViewCell {
     
     @IBOutlet weak var time: UILabel!
+    @IBOutlet weak var upLine: UILabel!
     @IBOutlet weak var status: UIImageView!
+    @IBOutlet weak var downLine: UILabel!
     @IBOutlet weak var content: UILabel!
     
     override func awakeFromNib() {

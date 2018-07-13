@@ -17,6 +17,7 @@ target 'BoysGirls' do
   pod 'FBSDKShareKit'
   pod 'GoogleSignIn'
   pod "BSImagePicker", "~> 2.7"
+  pod 'Alamofire', '~> 4.7'
 
   target 'BoysGirlsTests' do
     inherit! :search_paths

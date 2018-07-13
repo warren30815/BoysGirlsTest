@@ -8,13 +8,15 @@
 
 import UIKit
 import Firebase
+import FirebaseDatabase
 import IQKeyboardManagerSwift
 import FBSDKCoreKit
 import UserNotifications
 import GoogleSignIn
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate,  GIDSignInDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, GIDSignInDelegate {
+    
 
     var window: UIWindow?
     let userdefault = UserDefaults.standard
@@ -24,9 +26,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate,  GIDSignInDelegate {
         self.window = UIWindow.init(frame: UIScreen.main.bounds)
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let login_way = userdefault.string(forKey: "login_way")
+        let if_signup = userdefault.string(forKey: "if_signup")
         if login_way == "FB" || login_way == "Google"{
-            let initialVC = storyboard.instantiateViewController(withIdentifier: "tabbar")
-            self.window?.rootViewController = initialVC
+            if if_signup == "Yes"{
+                let initialVC = storyboard.instantiateViewController(withIdentifier: "tabbar")
+                self.window?.rootViewController = initialVC
+            }else{
+                let initialVC = storyboard.instantiateViewController(withIdentifier: "signup")
+                self.window?.rootViewController = initialVC
+            }
         }else{
             let initialVC = storyboard.instantiateViewController(withIdentifier: "LoginVC")
             self.window?.rootViewController = initialVC
@@ -58,10 +66,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate,  GIDSignInDelegate {
         GIDSignIn.sharedInstance().handle(url, sourceApplication: options[UIApplicationOpenURLOptionsKey.sourceApplication] as! String, annotation: options[UIApplicationOpenURLOptionsKey.annotation])
         return handled;
     }
-    
+
     func sign(_ signIn: GIDSignIn!, didSignInFor user: GIDGoogleUser!, withError error: Error!) {
+
         if error == nil{
-            guard let authentication = user.authentication else { return }
+            guard let authentication = user.authentication else { return}
             let credential = GoogleAuthProvider.credential(withIDToken: authentication.idToken, accessToken: authentication.accessToken)
             Auth.auth().signInAndRetrieveData(with: credential) { (authResult, error) in
                 if error != nil {
@@ -69,18 +78,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate,  GIDSignInDelegate {
                 }
                 self.userdefault.set(authResult?.user.uid, forKey: "uid")
                 self.userdefault.set("Google", forKey: "login_way")
-                self.userdefault.set("ok", forKey: "nextVC")
                 if let profile = authResult?.additionalUserInfo?.profile{
-//                    if let picture = profile["picture"] as? NSDictionary,
-//                        let data = picture["data"] as? NSDictionary,
-//                        let url = data["url"] as? String{
-                        print("profile",profile)
-//                    }
+                    if let picture = profile["picture"] as? String{
+                        self.userdefault.set(picture, forKey: "Google_profile_picture")
+                    }
                 }
             }
+        }else{
+            return
         }
+        let uid = userdefault.string(forKey: "uid")!
+        let ref = Database.database().reference(withPath: "ID/\(uid)/Profile/Enrollment")
+        // .observe 顧名思義就是「察看」的意思，也就是說ref.observe(.value)->查看「這串導引到特定位置的路徑」的value
+        // snapshot只是一個代稱(習慣為snapshot)，通常搭配.value，是指「這串路徑下的值」
+        ref.observe(.value, with: { (snapshot) in
+            var check = snapshot.value as? String
+            if check == "Yes"{
+                self.userdefault.set("Yes", forKey: "if_signup")
+            }
+        })
+        userdefault.set("ok", forKey: "nextVC")
     }
-    
     
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
