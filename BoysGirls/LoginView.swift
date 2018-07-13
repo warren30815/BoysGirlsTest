@@ -39,6 +39,7 @@ class LoginView: UIViewController, FBSDKLoginButtonDelegate, GIDSignInUIDelegate
             Auth.auth().signInAndRetrieveData(with: credential, completion: { (authresult, error) in
                 if error == nil{
                     self.userdefault.set(authresult?.user.uid, forKey: "uid")
+                    self.userdefault.set(authresult?.user.providerID, forKey: "FB_ID")
                     self.userdefault.set("FB", forKey: "login_way")
                     if let profile = authresult?.additionalUserInfo?.profile{
                         if let picture = profile["picture"] as? NSDictionary,
@@ -47,25 +48,36 @@ class LoginView: UIViewController, FBSDKLoginButtonDelegate, GIDSignInUIDelegate
                             print("profile",profile)
                         }
                     }
-//                    self.userdefault.set(authresult?.additionalUserInfo?.profile, forKey: "profile_picture")
-                    let storyboard = UIStoryboard(name: "Main", bundle: nil)
-                    let nextVC = storyboard.instantiateViewController(withIdentifier: "tabbar")
-                    self.present(nextVC,animated:true,completion:nil)
                 }else{
                     return
                 }
             })
         }
+        let uid = userdefault.string(forKey: "uid")!
+        let ref = Database.database().reference(withPath: "ID/\(uid)/Profile/Enrollment")
+        // .observe 顧名思義就是「察看」的意思，也就是說ref.observe(.value)->查看「這串導引到特定位置的路徑」的value
+        // snapshot只是一個代稱(習慣為snapshot)，通常搭配.value，是指「這串路徑下的值」
+        ref.observe(.value, with: { (snapshot) in
+            let check = snapshot.value as? String
+            if check == "Yes"{
+                self.userdefault.set("Yes", forKey: "if_signup")
+            }
+        })
     }
     
     
     func loginButton(_ loginButton: FBSDKLoginButton!, didCompleteWith result: FBSDKLoginManagerLoginResult!, error: Error!) {
-//        fetchProfile()
         if error == nil{
             userdefault.set("FB", forKey: "login_way")
+            let if_signup = self.userdefault.string(forKey: "if_signup")
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
-            let nextVC = storyboard.instantiateViewController(withIdentifier: "tabbar")
-            self.present(nextVC,animated:true,completion:nil)
+            if if_signup == "Yes"{
+                let nextVC = storyboard.instantiateViewController(withIdentifier: "tabbar")
+                self.present(nextVC,animated:true,completion:nil)
+            }else{
+                let nextVC = storyboard.instantiateViewController(withIdentifier: "signup")
+                self.present(nextVC,animated:true,completion:nil)
+            }
         }
     }
     func loginButtonDidLogOut(_ loginButton: FBSDKLoginButton!) {
@@ -82,9 +94,16 @@ class LoginView: UIViewController, FBSDKLoginButtonDelegate, GIDSignInUIDelegate
             while(true){
                 let nextVC = self.userdefault.object(forKey: "nextVC")
                 if nextVC != nil{
+                    sleep(1) // time for userdefault to set key if_signup
+                    let if_signup = self.userdefault.string(forKey: "if_signup")
                     let storyboard = UIStoryboard(name: "Main", bundle: nil)
-                    let nextView = storyboard.instantiateViewController(withIdentifier: "tabbar")
-                    self.present(nextView,animated:true,completion:nil)
+                    if if_signup == "Yes"{
+                        let nextVC = storyboard.instantiateViewController(withIdentifier: "tabbar")
+                        self.present(nextVC,animated:true,completion:nil)
+                    }else{
+                        let nextVC = storyboard.instantiateViewController(withIdentifier: "signup")
+                        self.present(nextVC,animated:true,completion:nil)
+                    }
                     queue.cancelAllOperations()
                     break
                 }

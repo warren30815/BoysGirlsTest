@@ -16,6 +16,7 @@ class Timetable: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
     let userdefault = UserDefaults.standard
     var event = ["報名","姊妹優惠","資料卡"]
+    var uid: String!
     // 用來比對是否超過日期
     let date = Date()
     var calendar = Calendar.current
@@ -24,6 +25,7 @@ class Timetable: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        uid = userdefault.string(forKey: "uid")
         calendar.timeZone = TimeZone(identifier: "Asia/Taipei")!
         let day = calendar.component(.day, from: date)
         let month = calendar.component(.month, from: date)
@@ -37,7 +39,7 @@ class Timetable: UIViewController, UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableview.dequeueReusableCell(withIdentifier: "timetable", for: indexPath) as! TimetableCell
         cell.time.text = event[indexPath.row]
-        cell.status.image = UIImage(named: "bulb")
+        cell.status.image = UIImage(named: "circle")
         cell.content.text = event[indexPath.row]
 //        cell.selectionStyle = .none
         return cell
@@ -56,7 +58,7 @@ class Timetable: UIViewController, UITableViewDelegate, UITableViewDataSource {
             let nextView = storyboard.instantiateViewController(withIdentifier: "ChooseArea")
             navigationController?.pushViewController(nextView, animated: true)
         }else{
-            print("kkkkkkkk")
+            
         }
     }
     
@@ -68,6 +70,7 @@ class Timetable: UIViewController, UITableViewDelegate, UITableViewDataSource {
             print("Logout")
             userdefault.set("No", forKey: "login_way")
             userdefault.removeObject(forKey: "nextVC")
+            userdefault.removeObject(forKey: "if_signup")
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
             let nextVC = storyboard.instantiateViewController(withIdentifier: "LoginVC")
             self.present(nextVC,animated:true,completion:nil)
